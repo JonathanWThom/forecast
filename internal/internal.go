@@ -17,8 +17,13 @@ type LatLong struct {
 type Period struct {
 	Name             string
 	Temperature      int
+	TemperatureUnit  string
 	ShortForecast    string
 	DetailedForecast string
+}
+
+func (p Period) String() string {
+	return fmt.Sprintf("%s: %d%s. %s.", p.Name, p.Temperature, p.TemperatureUnit, p.ShortForecast)
 }
 
 type Properties struct {
