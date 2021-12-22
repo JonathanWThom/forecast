@@ -7,8 +7,5 @@ import (
 )
 
 func main() {
-	periods := internal.GetForecast()
-	for _, p := range periods {
-		fmt.Println(p)
-	}
+	fmt.Println(internal.NewForecast())
 }

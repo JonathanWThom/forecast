@@ -9,6 +9,34 @@ import (
 	"net/http"
 )
 
+type Forecast struct {
+	City        string
+	State       string
+	ForecastUrl string
+	Periods     []Period
+}
+
+func NewForecast() Forecast {
+	f := Forecast{}
+	f.SetQuadrantParameters()
+	f.SetPeriods()
+
+	return f
+}
+
+func (f Forecast) String() string {
+	header := fmt.Sprintf(
+		"Forecast for %s, %s",
+		f.City, f.State,
+	)
+	var body string
+	for _, p := range f.Periods {
+		body += fmt.Sprintf("\n%s", p)
+	}
+
+	return fmt.Sprintf("%s\n%s", header, body)
+}
+
 type LatLong struct {
 	Lat float64
 	Lon float64
@@ -26,19 +54,29 @@ func (p Period) String() string {
 	return fmt.Sprintf("%s: %d%s. %s.", p.Name, p.Temperature, p.TemperatureUnit, p.ShortForecast)
 }
 
+type LocationProperties struct {
+	City  string
+	State string
+}
+
+type RelativeLocation struct {
+	Properties LocationProperties
+}
+
 type Properties struct {
-	Forecast       string
-	ForecastHourly string
-	Periods        []Period
+	Forecast         string
+	ForecastHourly   string
+	Periods          []Period
+	RelativeLocation RelativeLocation
 }
 
 type Points struct {
 	Properties Properties
 }
 
-func GetForecast() []Period {
+func (f *Forecast) SetPeriods() {
 	var data Points
-	resp, err := http.Get(GetQuadrant())
+	resp, err := http.Get(f.ForecastUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,10 +88,10 @@ func GetForecast() []Period {
 		log.Fatal(err)
 	}
 
-	return data.Properties.Periods
+	f.Periods = data.Properties.Periods
 }
 
-func GetQuadrant() string {
+func (f *Forecast) SetQuadrantParameters() {
 	base := "https://api.weather.gov/points/"
 	latlong, err := GetLocationData()
 	if err != nil {
@@ -73,7 +111,9 @@ func GetQuadrant() string {
 		log.Fatal(err)
 	}
 
-	return data.Properties.Forecast
+	f.ForecastUrl = data.Properties.Forecast
+	f.City = data.Properties.RelativeLocation.Properties.City
+	f.State = data.Properties.RelativeLocation.Properties.State
 }
 
 func (l LatLong) String() string {
